@@ -27,10 +27,7 @@ import java.io.IOException;
 import processing.core.*;
 import javax.imageio.*;
 import javax.imageio.stream.*;
-
-import com.sun.image.codec.jpeg.JPEGCodec;
-import com.sun.image.codec.jpeg.JPEGEncodeParam;
-import com.sun.image.codec.jpeg.JPEGImageEncoder;
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 
 /** 
  * Helper class to convert a image buffer into a binary representation of encoded image for sending to server.
@@ -65,11 +62,16 @@ public class makeImage {
 			for (int j = 0; j < srcimg.height; j++)
 				img.setRGB(i, j, srcimg.pixels[j * srcimg.width + i]);
 		try {
-			JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
-			JPEGEncodeParam encpar = encoder.getDefaultJPEGEncodeParam(img);
-			encpar.setQuality(1f, false);
-			encoder.setJPEGEncodeParam(encpar);
-			encoder.encode(img);
+			ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
+			JPEGImageWriteParam writeParam = (JPEGImageWriteParam) writer.getDefaultWriteParam();
+			writeParam.setCompressionMode(JPEGImageWriteParam.MODE_EXPLICIT);
+			writeParam.setCompressionQuality(1.0f);
+			
+			ImageOutputStream imageOut = ImageIO.createImageOutputStream(out);
+			writer.setOutput(imageOut);
+			writer.write(null, new javax.imageio.IIOImage(img, null, null), writeParam);
+			writer.dispose();
+			imageOut.close();
 		} catch (FileNotFoundException e) {
 			System.out.println(e);
 		} catch (IOException ioe) {
